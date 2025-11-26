@@ -3,17 +3,13 @@
 # --------------------------------
 
 resource "aws_eks_cluster" "cluster" {
-  name     = "${var.project_name}"
-  role_arn = aws_iam_role.eks_cluster_role.arn
+  name     = var.project_name
+  role_arn = var.cluster_role_arn
 
   vpc_config {
-    subnet_ids = aws_subnet.public[*].id
-    security_group_ids = [aws_security_group.eks_control_plane.id]
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [var.control_plane_sg_id]
   }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster_AmazonEKSClusterPolicy
-  ]
 }
 
 # -----------------------------------
@@ -23,8 +19,9 @@ resource "aws_eks_cluster" "cluster" {
 resource "aws_eks_node_group" "jenkins" {
   cluster_name    = aws_eks_cluster.cluster.name
   node_group_name = "${var.project_name}-ng-jenkins"
-  node_role_arn   = aws_iam_role.eks_node_role.arn
-  subnet_ids      = [aws_subnet.public[0].id]
+  node_role_arn   = var.node_role_arn
+  subnet_ids      = [var.subnet_ids[0]]
+
   scaling_config {
     desired_size = var.desired_capacity
     max_size     = 2
@@ -41,10 +38,6 @@ resource "aws_eks_node_group" "jenkins" {
   tags = {
     Name = "${var.project_name}-ng-jenkins"
   }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_worker_AmazonEKSWorkerNodePolicy
-  ]
 }
 
 # -----------------------------------
@@ -54,8 +47,9 @@ resource "aws_eks_node_group" "jenkins" {
 resource "aws_eks_node_group" "app" {
   cluster_name    = aws_eks_cluster.cluster.name
   node_group_name = "${var.project_name}-ng-app"
-  node_role_arn   = aws_iam_role.eks_node_role.arn
-  subnet_ids      = [aws_subnet.public[1].id]
+  node_role_arn   = var.node_role_arn
+  subnet_ids      = [var.subnet_ids[1]]
+
   scaling_config {
     desired_size = var.desired_capacity
     max_size     = 2
@@ -72,19 +66,4 @@ resource "aws_eks_node_group" "app" {
   tags = {
     Name = "${var.project_name}-ng-app"
   }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_worker_AmazonEKSWorkerNodePolicy
-  ]
-}
-
-resource "aws_eks_addon" "ebs_csi" {  
-  cluster_name = aws_eks_cluster.cluster.name
-  addon_name   = "aws-ebs-csi-driver"
-  addon_version = "v1.53.0-eksbuild.1"
-  service_account_role_arn = aws_iam_role.ebs_csi_role.arn
-  depends_on = [
-    aws_eks_node_group.jenkins,
-    aws_eks_node_group.app
-  ]
 }

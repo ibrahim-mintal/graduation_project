@@ -13,17 +13,15 @@ resource "aws_vpc" "main_vpc" {
 # ------------------------------
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main_vpc.id
-  tags = { 
-    Name = "${var.project_name}-igw" 
+  tags = {
+    Name = "${var.project_name}-igw"
   }
 }
 
 # ------------------------------
 # Get all availability zones in the region
 # ------------------------------
-
-  data "aws_availability_zones" "available" {}
-
+data "aws_availability_zones" "available" {}
 
 # ------------------------------
 # Public Subnets
@@ -33,13 +31,12 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main_vpc.id
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = element(data.aws_availability_zones.available.names, count.index)
-  map_public_ip_on_launch = true              
-  
+  map_public_ip_on_launch = true
+
   tags = {
     Name = "${var.project_name}-public-${count.index}"
   }
 }
-
 
 # ------------------------------
 # Route Table for Public Subnets
@@ -56,7 +53,6 @@ resource "aws_route_table" "public" {
     Name = "${var.project_name}-public-rt"
   }
 }
-
 
 # ------------------------------
 # Associate Route Table with Each Subnet

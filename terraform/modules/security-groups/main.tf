@@ -4,7 +4,7 @@
 resource "aws_security_group" "eks_control_plane" {
   name        = "${var.project_name}-eks-control-plane-sg"
   description = "Security group for EKS control plane"
-  vpc_id      = aws_vpc.main_vpc.id
+  vpc_id      = var.vpc_id
 
   tags = {
     Name = "${var.project_name}-eks-control-plane-sg"
@@ -17,7 +17,7 @@ resource "aws_security_group" "eks_control_plane" {
 resource "aws_security_group" "nodes" {
   name        = "${var.project_name}-nodes-sg"
   description = "Security group for EKS worker nodes"
-  vpc_id      = aws_vpc.main_vpc.id
+  vpc_id      = var.vpc_id
 
   # SSH 
   ingress {
@@ -50,14 +50,13 @@ resource "aws_security_group" "nodes" {
   }
 }
 
-
 ###############################################
 # LOAD BALANCER SECURITY GROUP
 ###############################################
 resource "aws_security_group" "lb" {
   name        = "${var.project_name}-lb-sg"
   description = "Security group for external LoadBalancer"
-  vpc_id      = aws_vpc.main_vpc.id
+  vpc_id      = var.vpc_id
 
   # Allow HTTP from Internet
   ingress {
@@ -81,7 +80,6 @@ resource "aws_security_group" "lb" {
   }
 }
 
-
 ###############################################
 # MANDATORY RULE: CONTROL PLANE → NODES (10250)
 ###############################################
@@ -95,7 +93,6 @@ resource "aws_security_group_rule" "cp_to_nodes_kubelet" {
   source_security_group_id = aws_security_group.eks_control_plane.id
 }
 
-
 ###############################################
 # MANDATORY RULE: LB → NODES (HTTP 80)
 ###############################################
@@ -108,7 +105,6 @@ resource "aws_security_group_rule" "lb_to_nodes_http" {
   security_group_id        = aws_security_group.nodes.id
   source_security_group_id = aws_security_group.lb.id
 }
-
 
 ###############################################
 # MANDATORY RULE: LB → NODES (NodePort 30000–32767)

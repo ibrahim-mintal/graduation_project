@@ -21,13 +21,13 @@ provider "aws" {
 
 # Read cluster info
 data "aws_eks_cluster" "cluster" {
-  name = var.project_name
-  depends_on = [aws_eks_cluster.cluster]
+  name       = module.eks.cluster_name
+  depends_on = [module.eks]
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = var.project_name
-  depends_on = [aws_eks_cluster.cluster]
+  name       = module.eks.cluster_name
+  depends_on = [module.eks]
 }
 
 # Kubernetes provider configured to talk to the target cluster (uses the aws eks auth token)
