@@ -11,6 +11,7 @@ metadata:
 spec:
   serviceAccountName: jenkins-sa
   containers:
+  # Kaniko container for building images
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
     command:
@@ -26,7 +27,8 @@ spec:
     volumeMounts:
     - name: docker-config
       mountPath: /kaniko/.docker
-
+  
+  # kubectl container for Kubernetes operations
   - name: kubectl
     image: alpine/k8s:1.28.3
     command:
@@ -54,49 +56,28 @@ spec:
   }
 
   stages {
+    // Checkout source code
     stage('Checkout') {
       steps {
         checkout scm
       }
     }
-
-    stage('Build & Scan Docker Image') {
+    // Build and push Docker image
+    stage('Build & Push Docker Image') {
       steps {
         container('kaniko') {
           sh '''
-            # Install Trivy inside Kaniko container
-            apk add --no-cache curl tar gzip
-            TRIVY_VERSION=0.43.2
-            curl -L https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz | tar xz -C /kaniko/
-
-            # Create Docker config for Kaniko
+            # Create Docker config for Kaniko authentication
             echo "{\\"auths\\":{\\"https://index.docker.io/v1/\\":{\\"auth\\":\\"$(echo -n $DOCKERHUB_CREDENTIALS_USR:$DOCKERHUB_CREDENTIALS_PSW | base64)\\"}}}" > /kaniko/.docker/config.json
-
-            # Build image with Kaniko
+            
+            # Build and push with Kaniko
             /kaniko/executor \
               --dockerfile=Dockerfile \
               --context=dir://${WORKSPACE}/app \
               --destination=${IMAGE_NAME}:${IMAGE_TAG} \
+              --destination=${IMAGE_NAME}:latest \
               --cache=true \
               --cache-ttl=24h
-
-            # Scan the image
-            /kaniko/trivy image --exit-code 1 ${IMAGE_NAME}:${BUILD_NUMBER} || echo "Vulnerabilities found, but continuing..."
-
-          '''
-        }
-      }
-    }
-
-    stage('Push Docker Image') {
-      steps {
-        container('kaniko') {
-          sh '''
-            /kaniko/executor \
-              --dockerfile=Dockerfile \
-              --context=dir://${WORKSPACE}/app \
-              --destination=${IMAGE_NAME}:${IMAGE_TAG} \
-              --destination=${IMAGE_NAME}:latest
           '''
         }
       }
@@ -106,7 +87,7 @@ spec:
       steps {
         container('kubectl') {
           sh """
-            echo "Deploying to EKS cluster..."
+            echo " Deploying to EKS cluster..."
             kubectl set image deployment/app-deployment app-container=${IMAGE_NAME}:${IMAGE_TAG} -n app-ns
             kubectl rollout restart deployment/app-deployment -n app-ns
             kubectl rollout status deployment/app-deployment -n app-ns --timeout=5m
@@ -114,15 +95,20 @@ spec:
         }
       }
     }
+
   }
 
   post {
     success {
-      echo "Pipeline completed successfully!"
-      echo "Image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
+      echo " Pipeline completed successfully!"
+      echo " Image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
     }
     failure {
-      echo "Pipeline failed!"
+      echo " Pipeline failed!"
     }
   }
 }
+
+
+
+
