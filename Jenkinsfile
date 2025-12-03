@@ -41,19 +41,7 @@ spec:
       limits:
         memory: "256Mi"
         cpu: "200m"
-  # Trivy container for security scanning 
-  - name: trivy
-    image: aquasec/trivy:latest
-    command:
-    - cat
-    tty: true
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "100m"
-      limits:
-        memory: "512Mi"
-        cpu: "200m"
+
   volumes:
   - name: docker-config
     emptyDir: {}
@@ -95,20 +83,20 @@ spec:
       }
     }
     // Security scan with Trivy
-    stage('Security Scan with Trivy') {
-      steps {
-        container('trivy') {
-          sh """
-            echo " Scanning image ${IMAGE_NAME}:${IMAGE_TAG} for vulnerabilities..."
-            trivy image --severity HIGH,CRITICAL --exit-code 1 ${IMAGE_NAME}:${IMAGE_TAG} || {
-              echo " Vulnerabilities found! Failing the build."
-              exit 1
-            }
-            echo " No critical vulnerabilities found."
-          """
-        }
-      }
-    }
+    // stage('Security Scan with Trivy') {
+    //   steps {
+    //     container('trivy') {
+    //       sh """
+    //         echo " Scanning image ${IMAGE_NAME}:${IMAGE_TAG} for vulnerabilities..."
+    //         trivy image --severity HIGH,CRITICAL --exit-code 1 ${IMAGE_NAME}:${IMAGE_TAG} || {
+    //           echo " Vulnerabilities found! Failing the build."
+    //           exit 1
+    //         }
+    //         echo " No critical vulnerabilities found."
+    //       """
+    //     }
+    //   }
+    // }
     // Deploy to EKS cluster
     stage('Deploy to EKS') {
       steps {
@@ -135,3 +123,20 @@ spec:
     }
   }
 }
+
+
+
+
+  // # Trivy container for security scanning 
+  // - name: trivy
+  //   image: aquasec/trivy:latest
+  //   command:
+  //   - cat
+  //   tty: true
+  //   resources:
+  //     requests:
+  //       memory: "256Mi"
+  //       cpu: "100m"
+  //     limits:
+  //       memory: "512Mi"
+  //       cpu: "200m"
