@@ -48,11 +48,11 @@ spec:
           # Resource limits for better cluster management
           resources:
             requests:
-              memory: "1Gi"
+              memory: "500Mi"
               cpu: "500m"
             limits:
-              memory: "2Gi"
-              cpu: "2000m"
+              memory: "1Gi"
+              cpu: "2"
           
           volumeMounts:
             - name: jenkins-home

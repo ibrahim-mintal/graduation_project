@@ -61,7 +61,7 @@ terraform apply
 
 ```bash
 # Update kubeconfig to connect to the EKS cluster
-aws eks update-kubeconfig --region us-east-1 --name depi-graduation
+aws eks update-kubeconfig --region us-west-2 --name depi-graduation
 ```
 
 ### Step 3: Deploy Namespaces
@@ -106,7 +106,9 @@ Access Jenkins at: `http://<EXTERNAL-IP>:8080`
 
 **Get initial admin password:**
 ```bash
-kubectl exec -n jenkins-ns <jenkins-pod-name> -- cat /var/jenkins_home/secrets/initialAdminPassword
+JENKINS_POD=$(kubectl get pods -n jenkins-ns  -o jsonpath='{.items[0].metadata.name}')
+PASSWORD=$(kubectl exec -n jenkins-ns $JENKINS_POD -- cat /var/jenkins_home/secrets/initialAdminPassword)
+echo "Initial Jenkins admin password: $PASSWORD"
 ```
 
 ### Step 6: Configure Jenkins
@@ -139,9 +141,9 @@ kubectl exec -n jenkins-ns <jenkins-pod-name> -- cat /var/jenkins_home/secrets/i
 2. **Configure Pipeline:**
    - Definition: Pipeline script from SCM
    - SCM: Git
-   - Repository URL: `https://github.com/Mohamedfathy90/URL-Shortner-DEPI.git`
+   - Repository URL: `git@github.com:ibrahim-mintal/graduation_project.git`
    - Branch: `main`
-   - Script Path: `Jenkinsfile-kaniko`
+   - Script Path: `Jenkinsfile`
 
 3. **Save and Build**
 
