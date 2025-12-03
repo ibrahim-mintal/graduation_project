@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>URL Shortener — Digital Egypt Pioneers</title>
+
+    <style>
+        /* -------------------------
+           Base / Reset
+           ------------------------- */
+        :root{
+            --glass-bg: rgba(15,15,15,0.55);
+            --glass-contrast: rgba(255,255,255,0.08);
+            --accent-1: #8AB4F8;
+            --accent-2: #BB86FC;
+            --accent-cta: #03DAC6;
+            --muted: rgba(255,255,255,0.75);
+            --card-radius: 16px;
+        }
+
+        *{box-sizing:border-box;margin:0;padding:0}
+        html,body{height:100%}
+        body{
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: url('/static/Landing_bg.png') no-repeat center center fixed;
+            background-size: cover;
+            color: var(--muted);
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* slight dark overlay to ensure contrast against background */
+        body::before{
+            content:"";
+            position:fixed;
+            inset:0;
+            background: rgba(0,0,0,0.45);
+            z-index:0;
+        }
+
+        /* -------------------------
+           Layout
+           ------------------------- */
+        .page {
+            max-width: 1100px;
+            margin: 36px auto;
+            position: relative;
+            z-index: 2; /* above overlay */
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 28px;
+            align-items: start;
+            padding: 18px;
+        }
+
+        /* Mobile stack */
+        @media (max-width: 880px) {
+            .page {
+                grid-template-columns: 1fr;
+                padding: 12px;
+            }
+        }
+
+        /* -------------------------
+           Header / Nav
+           ------------------------- */
+        header.app-header{
+            grid-column: 1 / -1;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            margin-bottom: 6px;
+        }
+
+        .brand {
+            display:flex;
+            align-items:center;
+            gap:12px;
+        }
+
+        .brand img.logo {
+            height:54px;
+            width:auto;
+            border-radius:10px;
+            border:1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.02);
+            padding:6px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        }
+
+        .brand h1{
+            font-size:1.15rem;
+            color: white;
+            line-height:1;
+        }
+
+        nav.links {
+            display:flex;
+            gap:12px;
+            align-items:center;
+        }
+
+        nav.links a{
+            color: var(--muted);
+            text-decoration:none;
+            font-weight:600;
+            padding:8px 12px;
+            border-radius:10px;
+            transition: all .18s ease;
+            font-size:0.95rem;
+        }
+
+        nav.links a:hover{
+            transform: translateY(-3px);
+            background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        }
+
+        /* -------------------------
+           Main Card (left) - form
+           ------------------------- */
+        .card {
+            background: var(--glass-bg);
+            border-radius: var(--card-radius);
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.55);
+            border: 1px solid rgba(255,255,255,0.06);
+            backdrop-filter: blur(10px) saturate(120%);
+            color: #eee;
+            animation: floatUp .6s cubic-bezier(.2,.9,.2,1);
+        }
+
+        @keyframes floatUp{
+            from{opacity:0;transform:translateY(18px)}
+            to{opacity:1;transform:none}
+        }
+
+        .hero-title {
+            display:flex;
+            align-items:center;
+            gap:14px;
+            margin-bottom:10px;
+        }
+
+        .hero-title h2{
+            font-size:1.5rem;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            margin:0;
+        }
+        .hero-sub {
+            color: #dcdcdc;
+            margin-bottom:18px;
+            font-size:0.98rem;
+        }
+
+        /* Input styles */
+        .form-row{
+            display:flex;
+            gap:12px;
+            margin-top:8px;
+        }
+        .url-input{
+            flex:1;
+            padding:14px 16px;
+            border-radius:12px;
+            border:2px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: #f1f1f1;
+            font-size:1rem;
+            transition: all .16s ease;
+        }
+        .url-input::placeholder{color: #cfcfcf}
+        .url-input:focus{
+            outline:none;
+            border-color: rgba(138,180,248,0.9);
+            box-shadow: 0 6px 30px rgba(138,180,248,0.08);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .shorten-btn{
+            padding:12px 16px;
+            border-radius:12px;
+            border:none;
+            background: linear-gradient(135deg,var(--accent-1),var(--accent-2));
+            color:white;
+            font-weight:700;
+            cursor:pointer;
+            font-size:1rem;
+            transition: transform .14s ease, box-shadow .14s ease;
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+        .shorten-btn:hover{
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(107,90,227,0.2);
+        }
+        .shorten-btn:disabled{opacity:.6; cursor:not-allowed; transform:none}
+
+        /* Result box */
+        .result {
+            margin-top:18px;
+            padding:14px;
+            border-radius:10px;
+            background: var(--glass-contrast);
+            border:1px solid rgba(255,255,255,0.06);
+            color: #e8f7f2;
+            display:none;
+            animation: pop .18s ease;
+        }
+        .result.show{display:block}
+        @keyframes pop{from{transform:scale(.995);opacity:0}to{transform:none;opacity:1}}
+
+        .url-result{
+            margin:8px 0;
+            padding:10px 12px;
+            background: rgba(0,0,0,0.38);
+            border-radius:8px;
+            font-family: "Courier New", monospace;
+            word-break:break-all;
+            color:#e8f7f2;
+        }
+
+        .copy-btn{
+            background: var(--accent-cta);
+            color:black;
+            border:none;
+            padding:10px 14px;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:700;
+        }
+
+        /* error */
+        .error{
+            margin-top:12px;
+            padding:12px;
+            border-radius:8px;
+            background: rgba(255, 0, 0, 0.12);
+            color: #ffbdbd;
+            border:1px solid rgba(255,0,0,0.22);
+            display:none;
+        }
+
+        /* -------------------------
+           Sidebar (right)
+           ------------------------- */
+        .aside {
+            position:sticky;
+            top:28px;
+            align-self:start;
+        }
+
+        .card.panel {
+            padding:18px;
+        }
+
+        .stats{
+            display:flex;
+            gap:14px;
+            align-items:center;
+            justify-content:space-between;
+            margin-bottom:14px;
+        }
+        .stat{
+            text-align:center;
+        }
+        .stat strong{display:block;font-size:1.4rem;color:white}
+        .stat small{color:#cfcfcf}
+
+        /* Recent urls list */
+        .recent-list{
+            margin-top:10px;
+            max-height:380px;
+            overflow:auto;
+            padding-right:6px;
+        }
+        .url-item{
+            background: rgba(255,255,255,0.04);
+            border-radius:8px;
+            padding:12px;
+            margin-bottom:10px;
+            border-left:4px solid rgba(138,180,248,0.14);
+            color:#eaeaea;
+        }
+        .url-item .short-url{color:var(--accent-1);font-weight:700}
+        .url-item .long-url{color:#ddd;font-size:.92rem}
+        .created-at{color:#bfbfbf;font-size:.82rem;margin-top:6px}
+
+        /* -------------------------
+           Footer
+           ------------------------- */
+        footer.site-footer{
+            grid-column:1 / -1;
+            margin-top:18px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            color:#cfcfcf;
+            font-size:.92rem;
+            opacity:.95;
+        }
+
+        .socials img{height:34px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);}
+
+        /* small tweaks for mobile */
+        @media (max-width:520px){
+            .brand img.logo{height:44px}
+            .hero-title h2{font-size:1.2rem}
+            .shorten-btn{font-size:.95rem;padding:10px}
+        }
+
+        /* Accessibility focus */
+        a:focus, button:focus, input:focus{outline: 3px solid rgba(138,180,248,0.14); outline-offset:2px}
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- header / nav -->
+        <header class="app-header" role="banner">
+            <div class="brand" aria-hidden="false">
+                <!-- logos removed as requested -->
+                <div>
+                    <h1>DepiOps Team </h1>
+                    <div style="font-size:.86rem;color:#dcdcdc">ALX3_SWD1_G1</div>
+                </div>
+            </div>
+
+            <!-- Navigation buttons removed as requested -->
+        </header>
+
+        <!-- Left column: main card and form -->
+        <main class="card" role="main" aria-labelledby="main-heading">
+            <div class="hero-title">
+                <div>
+                    <h2 id="main-heading">🔗 URL Shortener</h2>
+                    <div class="hero-sub">Turn long links into short, shareable URLs — fast and secure.</div>
+                </div>
+            </div>
+
+            <!-- Form (kept IDs so existing scripts work) -->
+            <form id="shortenForm" class="form" novalidate>
+                <div class="form-row">
+                    <input
+                        id="urlInput"
+                        type="url"
+                        class="url-input"
+                        placeholder="Enter your long URL here (e.g. https://example.com/very/long/path)"
+                        required
+                        aria-label="Long URL"
+                    />
+                    <button id="shortenBtn" class="shorten-btn" type="submit" aria-label="Shorten URL">
+                        ✨ Shorten
+                    </button>
+                </div>
+            </form>
+
+            <!-- Loading / Result / Error (kept IDs) -->
+            <div id="loading" class="loading" style="margin-top:14px; color:var(--accent-1); display:none">
+                🔄 Shortening your URL...
+            </div>
+
+            <div id="result" class="result" aria-live="polite" aria-atomic="true">
+                <strong>🎉 Success!</strong>
+                <div style="margin-top:8px">Your shortened URL:</div>
+                <div id="shortUrl" class="url-result" aria-label="Shortened URL">—</div>
+                <button class="copy-btn" onclick="copyToClipboard(this)" aria-label="Copy short url">📋 Copy</button>
+            </div>
+
+            <div id="error" class="error" role="alert"></div>
+        </main>
+
+        <!-- Right column: stats / recent -->
+        <aside class="aside">
+            <div class="card panel" aria-label="Service stats">
+                <div class="stats" role="status" aria-live="polite">
+                    <div class="stat">
+                        <strong id="statsCount">—</strong>
+                        <small>Total</small>
+                    </div>
+                    <div class="stat">
+                        <strong>API</strong>
+                        <small id="statsVersion">v—</small>
+                    </div>
+                </div>
+
+                <div style="font-weight:700;margin-bottom:8px">📋 Recently Shortened</div>
+                <div id="recentUrlsDisplay" class="recent-list" aria-live="polite">
+                    <div style="color:#cfcfcf">Loading...</div>
+                </div>
+            </div>
+
+            <div style="height:14px"></div>
+
+            <div class="card panel" style="text-align:center">
+                <div style="font-size:0.95rem;margin-bottom:8px">Need a custom domain?</div>
+                <a href="#" style="display:inline-block;text-decoration:none">
+                    <button class="shorten-btn" style="padding:10px 14px;background:linear-gradient(135deg,#03DAC6,#8AB4F8);color:black;margin-top:6px">Learn more</button>
+                </a>
+            </div>
+        </aside>
+
+        <!-- footer -->
+        <footer class="site-footer" role="contentinfo">
+            <div class="footer-content">
+                <div>© <strong>Digital Egypt Pioneers</strong> — <small>DevOps Track</small></div>
+                <div class="socials" aria-hidden="true">
+                    <!-- Logo image removed as requested -->
+                </div>
+            </div>
+            <div class="team-info">
+                <div class="date">📅 Sat 06/12/2025</div>
+                <h4>👥 Team 58</h4>
+                <div class="team-member">• Ibrahim Ahmed Ahmed Mintal</div>
+                <div class="team-member">• Mohamed Fathy Abdelrazik</div>
+                <div class="team-member">• Mahmoud Ahmed Mohamed</div>
+                <div class="team-member">• Mohamed Nasser Mohamed</div>
+                <div class="team-member">• George Michel Fawzy</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- -------------------------
+         Existing JS kept mostly intact
+         ------------------------- -->
+    <script>
+        let currentShortUrl = '';
+
+        // retain existing load behavior
+        window.addEventListener('load', function() {
+            loadStats();
+            loadRecentUrls();
+        });
+
+        document.getElementById('shortenForm').addEventListener('submit', async function(e){
+            e.preventDefault();
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+
+            if(!url){
+                showError('Please enter a URL');
+                return;
+            }
+            if(!url.startsWith('http://') && !url.startsWith('https://')){
+                showError('URL must start with http:// or https://');
+                return;
+            }
+            await shortenUrl(url);
+        });
+
+        async function shortenUrl(url){
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const error = document.getElementById('error');
+            const btn = document.getElementById('shortenBtn');
+
+            loading.style.display = 'block';
+            result.classList.remove('show');
+            error.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = '🔄 Processing...';
+
+            try{
+                const response = await fetch('/shorten', {
+                    method:'POST',
+                    headers:{ 'Content-Type':'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if(response.ok){
+                    currentShortUrl = data.short_url;
+                    document.getElementById('shortUrl').textContent = data.short_url;
+                    document.getElementById('result').classList.add('show');
+                    document.getElementById('urlInput').value = '';
+                    await loadStats();
+                    await loadRecentUrls();
+                } else {
+                    showError(data.error || 'Failed to shorten URL');
+                }
+            } catch(err){
+                showError('Network error: ' + err.message);
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+                btn.textContent = '✨ Shorten';
+            }
+        }
+
+        async function loadStats(){
+            try{
+                const response = await fetch('/stats');
+                const data = await response.json();
+                if(response.ok){
+                    document.getElementById('statsCount').textContent = data.total_shortened_urls || '—';
+                    document.getElementById('statsVersion').textContent = data.service ? data.service + ' v' + (data.version || '') : '—';
+                } else {
+                    document.getElementById('statsCount').textContent = '—';
+                }
+            } catch(err){
+                document.getElementById('statsCount').textContent = '—';
+            }
+        }
+
+        async function loadRecentUrls(){
+            try{
+                const response = await fetch('/list');
+                const data = await response.json();
+
+                if(response.ok && data.recent_urls){
+                    const urls = data.recent_urls;
+                    if(urls.length === 0){
+                        document.getElementById('recentUrlsDisplay').innerHTML = '<div style="color:#cfcfcf">No URLs shortened yet.</div>';
+                        return;
+                    }
+                    const html = urls.map(u => `
+                        <div class="url-item">
+                            <div class="short-url"><a href="${u.short_url}" target="_blank">${u.short_url}</a></div>
+                            <div class="long-url">${u.long_url}</div>
+                            <div class="created-at">Created: ${new Date(u.created_at).toLocaleString()}</div>
+                        </div>
+                    `).join('');
+                    document.getElementById('recentUrlsDisplay').innerHTML = html;
+                } else {
+                    document.getElementById('recentUrlsDisplay').textContent = 'Failed to load recent URLs';
+                }
+            } catch(err){
+                document.getElementById('recentUrlsDisplay').textContent = 'Error loading recent URLs';
+            }
+        }
+
+        function showError(message){
+            const error = document.getElementById('error');
+            error.textContent = '❌ ' + message;
+            error.style.display = 'block';
+            setTimeout(()=>{ error.style.display = 'none' }, 5000);
+        }
+
+        function copyToClipboard(btn){
+            if(currentShortUrl){
+                if(navigator.clipboard && navigator.clipboard.writeText){
+                    navigator.clipboard.writeText(currentShortUrl).then(()=>{ showSuccess(btn) }).catch(()=>{ fallbackCopy(btn)});
+                } else {
+                    fallbackCopy(btn);
+                }
+            }
+        }
+
+        function showSuccess(btn){
+            const original = btn.textContent;
+            btn.textContent = '✅ Copied!';
+            btn.style.background = '#28a745';
+            setTimeout(()=>{ btn.textContent = original; btn.style.background = 'var(--accent-cta)'; }, 1600);
+        }
+
+        function fallbackCopy(btn){
+            const ta = document.createElement('textarea');
+            ta.value = currentShortUrl;
+            document.body.appendChild(ta);
+            ta.select();
+            try{ document.execCommand('copy'); showSuccess(btn); } catch(e){ showError('Failed to copy to clipboard'); }
+            document.body.removeChild(ta);
+        }
+
+        // Refresh periodically
+        setInterval(()=>{ loadStats(); loadRecentUrls(); }, 30000);
+    </script>
+</body>
+</html>
