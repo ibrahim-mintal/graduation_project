@@ -73,7 +73,7 @@ spec:
             # Build and push with Kaniko
             /kaniko/executor \
               --dockerfile=Dockerfile \
-              --context=dir://${WORKSPACE} \
+              --context=dir://${WORKSPACE}/app \
               --destination=${IMAGE_NAME}:${IMAGE_TAG} \
               --destination=${IMAGE_NAME}:latest \
               --cache=true \
