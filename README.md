@@ -1,84 +1,177 @@
-# URL Shortener - DEPI Graduation Project
+# DEPI Graduation Project: URL Shortener on AWS EKS
 
-A Laravel-based URL shortener application deployed on AWS EKS with automated CI/CD using Jenkins and Kaniko.
+Welcome to the DEPI Graduation Project! This repository contains a fully functional URL shortener service deployed on AWS EKS. It demonstrates modern DevOps practices including containerization, CI/CD pipelines, cloud-native architecture, and automated deployments.
 
-## 🏗️ Architecture
+The project provides a simple, reliable, and scalable URL shortening service built with Flask, backed by SQLite, and deployed in a Kubernetes environment on AWS. It is designed for learning cloud infrastructure concepts, CI/CD automation, and scalable application deployment.
+
+## What Makes This Special
+
+Imagine turning long, unwieldy URLs into short, shareable links with just a click. Our application does exactly that, while demonstrating enterprise-grade deployment practices. Here's what sets it apart:
+
+- **Smart URL Shortening**: Uses MD5 hashing with collision avoidance for unique, short codes
+- **Persistent Storage**: SQLite database with Docker volume persistence
+- **Web Interface**: Beautiful, responsive UI with real-time stats and recent links
+- **Cloud-Native**: Fully containerized and orchestrated on AWS EKS
+- **Automated Pipelines**: Jenkins CI/CD with Kaniko for secure, daemon-less builds
+- **Security First**: RBAC, namespace isolation, and least-privilege access
+- **Monitoring Ready**: Built-in health checks and logging
+
+## Architecture at a Glance
+
+We've structured this project to follow best practices for cloud applications, keeping things organized and scalable:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         AWS EKS Cluster                     │
-│                                                             │
-│  ┌──────────────────────┐      ┌──────────────────────┐   │
-│  │   jenkins-ns         │      │      app-ns          │   │
-│  │                      │      │                      │   │
-│  │  ┌────────────────┐  │      │  ┌────────────────┐  │   │
-│  │  │ Jenkins        │  │      │  │ URL Shortener  │  │   │
-│  │  │ (CI/CD)        │──┼──────┼─▶│ Application    │  │   │
-│  │  └────────────────┘  │      │  └────────────────┘  │   │
-│  │                      │      │                      │   │
-│  └──────────────────────┘      └──────────────────────┘   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   GitHub Repo   │ -> │     Jenkins     │ -> │     AWS EKS     │
+│                 │    │   (CI/CD)       │    │   (Production)  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │   URL Shortener │
+                    │    (Flask App)  │
+                    └─────────────────┘
 ```
 
-## 📋 Prerequisites
+<p align="center">
+  <img src="Graduation_Project.png" alt="Architecture Diagram" width="800">
+</p>
 
-- AWS Account with appropriate permissions
-- AWS CLI configured
-- kubectl installed
-- Terraform v1.0+
-- Docker Hub account
-- Git
+Key Components:
+- AWS Infrastructure: Includes a VPC, EKS cluster with separate node groups for Jenkins and the app, plus EBS for storage.
+- Kubernetes: Uses isolated namespaces (app-ns and jenkins-ns) with role-based access control for security.
+- Application: A Flask-based API with SQLite for data storage, exposed through a LoadBalancer service.
+- CI/CD: Jenkins automates builds using Kaniko and deploys updates to the cluster.
 
-## 🚀 Deployment Guide
+## Project Structure
 
-### Step 1: Infrastructure Setup with Terraform
+```
+.
+├── app/                          # Flask application
+│   ├── app.py                    # Main Flask app with API endpoints
+│   ├── Dockerfile                # Container build instructions
+│   ├── index.html                # Web UI
+│   ├── requirements.txt          # Python dependencies
+│   └── static/                   # Static assets (images, etc.)
+│
+├── terraform/                    # Infrastructure as Code
+│   ├── main.tf                   # Main Terraform configuration
+│   ├── variables.tf              # Input variables
+│   ├── outputs.tf                # Output values
+│   ├── providers.tf              # Provider configurations
+│   └── modules/                  # Reusable Terraform modules
+│       ├── vpc/                  # VPC setup
+│       ├── security-groups/      # Security group rules
+│       ├── iam/                  # IAM roles and policies
+│       ├── eks/                  # EKS cluster configuration
+│       └── ebs-csi/              # EBS storage driver
+│
+├── kubernetes/                   # Kubernetes manifests
+│   ├── namespaces/               # Namespace definitions
+│   │   ├── app-namespace.yaml
+│   │   └── jenkins-namespace.yaml
+│   ├── jenkins/                  # Jenkins deployment files
+│   │   ├── storageclass-ebs.yaml
+│   │   ├── jenkins-pvc.yaml
+│   │   ├── jenkins-sa.yaml
+│   │   ├── jenkins-role-*.yaml
+│   │   ├── jenkins-deployment.yaml
+│   │   └── jenkins-service.yaml
+│   └── app/                      # Application deployment
+│       ├── app-deployment.yaml
+│       └── app-service.yaml
+│
+├── Jenkinsfile                   # CI/CD pipeline definition
+├── README.md                     # This file
+└── .gitignore                    # Git ignore rules
+```
 
-Deploy the EKS cluster and supporting infrastructure:
+## What You'll Need
+
+Before getting started, make sure you have these prerequisites in place:
+
+Prerequisites:
+- AWS Account: Needs permissions for EKS, EC2, VPC, IAM, and EBS services.
+- Tools:
+  - Terraform version 1.0 or higher
+  - kubectl configured to connect to your EKS cluster
+  - AWS CLI with your credentials set up
+  - Docker for testing locally
+  - Git for version control
+- Knowledge: A basic understanding of AWS, Kubernetes, and CI/CD will help.
+- Resources: Ensure your AWS account has enough limits; we use t3.small instances.
+
+## Step-by-Step Setup Guide
+
+Let's get you up and running! We'll go through infrastructure setup, Kubernetes deployment, and CI/CD configuration.
+
+### Step 1: Infrastructure Provisioning with Terraform
+
+The first step is to set up the AWS infrastructure that will host our application. Terraform will create all the necessary resources in a repeatable way.
+
+Navigate to the terraform directory and run these commands:
 
 ```bash
 cd terraform
 
-# Initialize Terraform
+# Initialize Terraform modules
 terraform init
 
-# Review the plan
+# Review what will be created
 terraform plan
 
-# Apply the configuration
+# Deploy the infrastructure
 terraform apply
 ```
 
-**What gets created:**
-- VPC with public subnets across 2 availability zones
-- EKS cluster with control plane
-- Two node groups (jenkins-ng and app-ng)
-- Security groups for EKS, nodes, and load balancers
-- IAM roles and policies
-- EBS CSI driver for persistent storage
+This will create:
+- A VPC with public subnets spread across two availability zones for high availability.
+- An EKS cluster with a control plane to manage the Kubernetes environment.
+- Two managed node groups: one for Jenkins (jenkins-ng) and one for the application (app-ng), each with t3.small instances.
+- Security groups to control network access.
+- IAM roles for the necessary permissions.
+- The EBS CSI driver to allow persistent storage for our application data.
 
-### Step 2: Configure kubectl
+### Step 2: Connect to Your EKS Cluster
+
+Now let's configure kubectl to talk to your new cluster:
 
 ```bash
-# Update kubeconfig to connect to the EKS cluster
+# Update kubeconfig (replace with your region and cluster name)
 aws eks update-kubeconfig --region us-west-2 --name depi-graduation
 ```
 
-### Step 3: Deploy Namespaces
+Verify connection:
+```bash
+kubectl get nodes
+```
+
+### Step 3: Deploy Kubernetes Namespaces
+
+Kubernetes namespaces help organize and isolate resources. We'll create separate namespaces for Jenkins and the application to keep things secure and organized.
+
+Change to the namespaces directory and apply the YAML files:
 
 ```bash
-cd ../kubernetes
+cd ../kubernetes/namespaces
 
-# Create namespaces
-kubectl apply -f namespaces/
+# Deploy both namespaces
+kubectl apply -f app-namespace.yaml
+kubectl apply -f jenkins-namespace.yaml
 ```
+
+This sets up 'app-ns' for the URL shortener app and 'jenkins-ns' for the CI/CD tools.
 
 ### Step 4: Deploy Jenkins
 
-```bash
-cd jenkins
+Time to set up our CI/CD powerhouse:
 
-# Deploy in order:
+```bash
+cd ../jenkins
+
+# Deploy in this order:
 kubectl apply -f storageclass-ebs.yaml
 kubectl apply -f jenkins-pvc.yaml
 kubectl apply -f jenkins-sa.yaml
@@ -90,165 +183,150 @@ kubectl apply -f jenkins-deployment.yaml
 kubectl apply -f jenkins-service.yaml
 ```
 
-**Wait for Jenkins to be ready:**
+Wait for Jenkins to be ready:
 ```bash
 kubectl rollout status deployment/jenkins-deployment -n jenkins-ns
 ```
 
 ### Step 5: Access Jenkins
 
-Get the LoadBalancer URL:
+Once Jenkins is running, you need to access its web interface to configure it.
+
+First, find the external IP address of the Jenkins service:
+
 ```bash
+# Get Jenkins URL
 kubectl get svc jenkins-service -n jenkins-ns
 ```
 
-Access Jenkins at: `http://<EXTERNAL-IP>:8080`
+Look for the EXTERNAL-IP in the output. Then, retrieve the initial admin password from the Jenkins pod:
 
-**Get initial admin password:**
 ```bash
-JENKINS_POD=$(kubectl get pods -n jenkins-ns  -o jsonpath='{.items[0].metadata.name}')
-PASSWORD=$(kubectl exec -n jenkins-ns $JENKINS_POD -- cat /var/jenkins_home/secrets/initialAdminPassword)
-echo "Initial Jenkins admin password: $PASSWORD"
+# Retrieve admin password
+JENKINS_POD=$(kubectl get pods -n jenkins-ns -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n jenkins-ns $JENKINS_POD -- cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 
-### Step 6: Configure Jenkins
+Open your browser and go to `http://<EXTERNAL-IP>:8080`. Use 'admin' as the username and the password you just retrieved. Follow the setup wizard to install suggested plugins and create an admin user.
 
-1. **Install Required Plugins:**
-   - Kubernetes plugin
-   - Pipeline plugin
+### Step 6: Configure Jenkins for Kubernetes
 
-2. **Add DockerHub Credentials:**
-   - Go to: Manage Jenkins → Manage Credentials
-   - Add credentials with ID: `dockerhub-credentials`
+Set up Jenkins to deploy to your EKS cluster:
+
+1. **Install Plugins**:
+   - Go to Manage Jenkins → Manage Plugins
+   - Install: Kubernetes, Pipeline
+
+2. **Add DockerHub Credentials**:
+   - Manage Jenkins → Manage Credentials
+   - Add credentials: `dockerhub-credentials`
    - Username: Your DockerHub username
-   - Password: Your DockerHub token
+   - Password: Your DockerHub access token
 
-3. **Configure Kubernetes Cloud:**
-   - Go to: Manage Jenkins → Manage Nodes and Clouds → Configure Clouds
-   - Add Kubernetes cloud:
-     - **Kubernetes URL**: `https://kubernetes.default.svc.cluster.local`
-     - **Kubernetes Namespace**: `jenkins-ns`
+3. **Configure Kubernetes Cloud**:
+   - Manage Jenkins → Manage Nodes and Clouds → Configure Clouds
+   - Add new Kubernetes cloud:
+     - **URL**: `https://kubernetes.default.svc.cluster.local`
+     - **Namespace**: `jenkins-ns`
      - **Jenkins URL**: `http://jenkins-service.jenkins-ns.svc.cluster.local:8080`
-     - **Jenkins tunnel**: `jenkins-service.jenkins-ns.svc.cluster.local:50000`
-   - Test connection (should show "Connected to Kubernetes...")
+     - **Tunnel**: `jenkins-service.jenkins-ns.svc.cluster.local:50000`
+   - Test connection
 
-### Step 7: Create Jenkins Pipeline
+### Step 7: Create the CI/CD Pipeline
 
-1. **Create New Pipeline Job:**
-   - New Item → Pipeline
-   - Name: `shortner-app`
+Let's create the pipeline that will automate your deployments:
 
-2. **Configure Pipeline:**
+1. **New Pipeline Job**:
+   - Name: `url-shortener-app`
+   - Type: Pipeline
+
+2. **Configure Pipeline**:
    - Definition: Pipeline script from SCM
    - SCM: Git
-   - Repository URL: `https://github.com/ibrahim-mintal/graduation_project.git`
+   - Repository URL: Your GitHub repo URL
    - Branch: `main`
    - Script Path: `Jenkinsfile`
 
 3. **Save and Build**
 
-### Step 8: Deploy Application (Manual - First Time)
+### Step 7.5: Configure GitHub Webhooks
+
+To automate the CI/CD pipeline on every push to the repository, configure GitHub webhooks to trigger Jenkins builds:
+
+1. **In GitHub Repository**:
+   - Go to your repository on GitHub
+   - Navigate to Settings → Webhooks
+   - Click "Add webhook"
+   - **Payload URL**: `http://<JENKINS-EXTERNAL-IP>:8080/github-webhook/`
+     - Replace `<JENKINS-EXTERNAL-IP>` with your Jenkins service external IP
+   - **Content type**: `application/json`
+   - **Secret**: Leave blank (or set if you configured one in Jenkins)
+   - **Which events would you like to trigger this webhook?**: Select "Just the push event"
+   - Click "Add webhook"
+
+2. **In Jenkins**:
+   - Go to your pipeline job (`url-shortener-app`)
+   - Click "Configure"
+   - Under "Build Triggers", check "GitHub hook trigger for GITScm polling"
+   - Save the configuration
+
+Now, every push to the `main` branch will automatically trigger a Jenkins build and deployment.
+
+### Step 8: Deploy the Application
+
+For the initial deployment, we'll manually apply the Kubernetes manifests to get the app running.
+
+Navigate to the app directory and deploy:
 
 ```bash
 cd ../app
 
-# Deploy application
+# Deploy the URL shortener
 kubectl apply -f app-deployment.yaml
 kubectl apply -f app-service.yaml
 
-# Wait for deployment
+# Wait for rollout
 kubectl rollout status deployment/app-deployment -n app-ns
 ```
 
-**Get application URL:**
+Once deployed, find the external IP of the service:
+
 ```bash
 kubectl get svc myapp-service -n app-ns
 ```
 
-Access your application at: `http://<EXTERNAL-IP>`
+Open `http://<EXTERNAL-IP>` in your browser to start shortening URLs!
 
-## 🔄 CI/CD Pipeline
+---
+## CI/CD Pipeline Deep Dive
 
-The Jenkins pipeline automatically:
+Our Jenkins pipeline automates the entire deployment process:
 
-1. **Checkout** - Pulls code from GitHub
-2. **Build & Push** - Builds Docker image using Kaniko and pushes to DockerHub
-3. **Deploy** - Updates the deployment in EKS with the new image
+1. **Checkout**: Pull latest code from GitHub
+2. **Build & Push**: Use Kaniko to build Docker image and push to DockerHub
+3. **Deploy**: Update Kubernetes deployment with new image version
 
-### Pipeline Stages
-
+**Pipeline Stages:**
 ```groovy
 Checkout → Build & Push (Kaniko) → Deploy to EKS
 ```
 
-## 📁 Project Structure
+**Key Features:**
+- Daemon-less builds with Kaniko (no privileged containers)
+- Automatic image tagging with build numbers
+- Rolling updates for zero-downtime deployments
 
-```
-.
-├── terraform/                 # Infrastructure as Code
-│   ├── modules/
-│   │   ├── vpc/              # VPC module
-│   │   ├── security-groups/  # Security groups module
-│   │   ├── iam/              # IAM roles module
-│   │   ├── eks/              # EKS cluster module
-│   │   └── ebs-csi/          # EBS CSI driver module
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   └── providers.tf
-│
-├── kubernetes/               # Kubernetes manifests
-│   ├── namespaces/
-│   │   ├── app-namespace.yaml
-│   │   └── jenkins-namespace.yaml
-│   ├── jenkins/
-│   │   ├── storageclass-ebs.yaml
-│   │   ├── jenkins-pvc.yaml
-│   │   ├── jenkins-sa.yaml
-│   │   ├── jenkins-role-*.yaml
-│   │   ├── jenkins-rolebinding-*.yaml
-│   │   ├── jenkins-deployment.yaml
-│   │   └── jenkins-service.yaml
-│   └── app/
-│       ├── app-deployment.yaml
-│       └── app-service.yaml
-│
-└── Jenkinsfile-kaniko        # CI/CD pipeline definition
-```
+## Security & Best Practices
 
-## 🔐 Security Features
+We've implemented several security measures:
 
-- **No Privileged Containers**: Uses Kaniko instead of Docker-in-Docker
-- **RBAC**: Least privilege access with dedicated service accounts
+- **RBAC**: Jenkins has limited permissions to manage app deployments only
 - **Namespace Isolation**: Jenkins and app run in separate namespaces
-- **IAM Roles**: Proper AWS IAM roles for EKS and EBS CSI
-- **Security Groups**: Network isolation at VPC level
+- **IAM Roles**: Proper AWS IAM for EKS and EBS access
+- **Network Security**: VPC-level isolation with security groups
+- **Container Security**: Non-root containers, minimal base images
 
-## 🛠️ Technologies Used
-
-- **Infrastructure**: Terraform, AWS EKS, VPC, EBS
-- **Container Orchestration**: Kubernetes
-- **CI/CD**: Jenkins with Kubernetes plugin
-- **Container Build**: Kaniko (daemon-less)
-- **Container Registry**: Docker Hub
-
-## 📊 Resource Specifications
-
-### Jenkins Pod
-- Memory: 1-2Gi
-- CPU: 0.5-2 cores
-- Storage: 10Gi EBS volume
-
-### Application Pod
-- Replicas: 1
-- Container Port: 80
-- Service Type: LoadBalancer
-
-### Node Groups
-- **jenkins-ng**: t3.small instances
-- **app-ng**: t3.small instances
-
-## 🔍 Monitoring & Troubleshooting
+## Monitoring & Troubleshooting
 
 ### Check Pod Status
 ```bash
@@ -262,27 +340,29 @@ kubectl get pods -n app-ns
 ### View Logs
 ```bash
 # Jenkins logs
-kubectl logs -n jenkins-ns <jenkins-pod-name>
+kubectl logs -n jenkins-ns deployment/jenkins-deployment
 
 # Application logs
-kubectl logs -n app-ns <app-pod-name>
+kubectl logs -n app-ns deployment/app-deployment
 ```
 
-### Check Services
-```bash
-kubectl get svc -n jenkins-ns
-kubectl get svc -n app-ns
-```
+### Common Issues
 
-### Describe Resources
-```bash
-kubectl describe pod <pod-name> -n <namespace>
-kubectl describe deployment <deployment-name> -n <namespace>
-```
+**Jenkins pod stuck in Pending:**
+- Check node group capacity
+- Verify EBS PVC binding
 
-## 🧹 Cleanup
+**Application not accessible:**
+- Confirm LoadBalancer provisioning
+- Check security group rules
 
-To destroy all resources:
+**Pipeline build failures:**
+- Verify DockerHub credentials
+- Check Kaniko configuration
+
+## Cleanup
+
+When you're done experimenting:
 
 ```bash
 # Delete Kubernetes resources
@@ -295,10 +375,7 @@ cd terraform
 terraform destroy
 ```
 
+---
 
-
-
-
-
-
-
+**Built with ❤️ by the DEPI DevOps Team**  
+*Transforming ideas into scalable solutions, one commit at a time.*
