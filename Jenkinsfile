@@ -11,7 +11,6 @@ metadata:
 spec:
   serviceAccountName: jenkins-sa
   containers:
-  # Kaniko container for building images
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
     command:
@@ -28,7 +27,6 @@ spec:
     - name: docker-config
       mountPath: /kaniko/.docker
 
-  # kubectl container for Kubernetes operations
   - name: kubectl
     image: alpine/k8s:1.28.3
     command:
@@ -40,20 +38,6 @@ spec:
         cpu: "100m"
       limits:
         memory: "256Mi"
-        cpu: "200m"
-
-  # Scanner container (Trivy) for image scanning
-  - name: trivy
-    image: aquasec/trivy:latest
-    command:
-    - cat
-    tty: true
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "100m"
-      limits:
-        memory: "512Mi"
         cpu: "200m"
 
   volumes:
@@ -76,31 +60,29 @@ spec:
       }
     }
 
-    stage('Build Docker Image') {
+    stage('Build & Scan Docker Image') {
       steps {
         container('kaniko') {
           sh '''
-            # Create Docker config for Kaniko authentication
+            # Install Trivy inside Kaniko container
+            apk add --no-cache curl tar gzip
+            TRIVY_VERSION=0.43.2
+            curl -L https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz | tar xz -C /kaniko/
+
+            # Create Docker config for Kaniko
             echo "{\\"auths\\":{\\"https://index.docker.io/v1/\\":{\\"auth\\":\\"$(echo -n $DOCKERHUB_CREDENTIALS_USR:$DOCKERHUB_CREDENTIALS_PSW | base64)\\"}}}" > /kaniko/.docker/config.json
 
-            # Build with Kaniko
+            # Build image with Kaniko
             /kaniko/executor \
               --dockerfile=Dockerfile \
               --context=dir://${WORKSPACE}/app \
               --destination=${IMAGE_NAME}:${IMAGE_TAG} \
               --cache=true \
               --cache-ttl=24h
-          '''
-        }
-      }
-    }
 
-    stage('Scan Image') {
-      steps {
-        container('trivy') {
-          sh '''
-            echo "Scanning image ${IMAGE_NAME}:${IMAGE_TAG}..."
-            trivy image --exit-code 1 ${IMAGE_NAME}:${IMAGE_TAG} || exit 0
+            # Scan the image
+            /kaniko/trivy image --exit-code 1 ${IMAGE_NAME}:${BUILD_NUMBER} || echo "Vulnerabilities found, but continuing..."
+
           '''
         }
       }
