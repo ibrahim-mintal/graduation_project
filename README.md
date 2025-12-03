@@ -141,7 +141,7 @@ echo "Initial Jenkins admin password: $PASSWORD"
 2. **Configure Pipeline:**
    - Definition: Pipeline script from SCM
    - SCM: Git
-   - Repository URL: `git@github.com:ibrahim-mintal/graduation_project.git`
+   - Repository URL: `https://github.com/ibrahim-mintal/graduation_project.git`
    - Branch: `main`
    - Script Path: `Jenkinsfile`
 

@@ -17,6 +17,6 @@ spec:
         role: app-ng   
       containers:
         - name: app-container
-          image: ibrahimmintal/shorten-url:latest
+          image: ibrahimmintal/shorten-url
           ports:
-            - containerPort: 8000
+            - containerPort: 5000
