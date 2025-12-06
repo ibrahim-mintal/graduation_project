@@ -155,7 +155,7 @@ Kubernetes namespaces help organize and isolate resources. We'll create separate
 Change to the namespaces directory and apply the YAML files:
 
 ```bash
-cd ../kubernetes/namespaces
+cd ../kubernetes/namespaces/
 
 # Deploy both namespaces
 kubectl apply -f app-namespace.yaml

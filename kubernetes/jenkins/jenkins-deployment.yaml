@@ -16,10 +16,10 @@ spec:
       nodeSelector:
         role: jenkins-ng
       securityContext:
-        fsGroup: 1000
-      serviceAccountName: jenkins-sa
-      
-      initContainers:
+        fsGroup: 1000                  # Jenkins default user group ID
+      serviceAccountName: jenkins-sa   # Ensure this service account exists with necessary permissions
+
+      initContainers:                 # Init container to fix permissions
         - name: fix-permissions
           image: busybox:1.36
           command:
@@ -30,8 +30,8 @@ spec:
             chown -R 1000:1000 /var/jenkins_home || true
             chmod -R g+rwX /var/jenkins_home || true
             echo "Done"
-          securityContext:
-            runAsUser: 0
+          securityContext:           # Run as root to change ownership
+            runAsUser: 0             # Root user
           volumeMounts:
             - name: jenkins-home
               mountPath: /var/jenkins_home
@@ -60,7 +60,7 @@ spec:
       
       volumes:
         - name: jenkins-home
-          persistentVolumeClaim:
-            claimName: jenkins-pvc
+          persistentVolumeClaim:                     # Use existing PVC
+            claimName: jenkins-pvc          
 
 

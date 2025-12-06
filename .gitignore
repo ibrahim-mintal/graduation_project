@@ -4,3 +4,6 @@
 /terraform/crash.log
 /terraform/*.tfplan
 /terraform/.terraform.lock.hcl
+.env
+*.log
+.git
