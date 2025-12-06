@@ -2,7 +2,7 @@
 # Creating new IAM role for EBS 
 # --------------------------------
 
-# Extract OIDC issuer and id
+# Extract OIDC issuer and id from eks
 locals {
   oidc_issuer_full = var.oidc_issuer
   oidc_id          = replace(local.oidc_issuer_full, "https://", "")
