@@ -35,7 +35,7 @@ module "eks" {
   source = "./modules/eks"
 
   project_name        = var.project_name
-  cluster_role_arn    = module.iam.eks_cluster_role_arn
+  cluster_role_arn    = module.iam.eks_role_arn
   node_role_arn       = module.iam.eks_node_role_arn
   subnet_ids          = module.vpc.public_subnet_ids
   control_plane_sg_id = module.security_groups.eks_control_plane_sg_id

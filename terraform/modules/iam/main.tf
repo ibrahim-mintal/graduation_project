@@ -3,7 +3,7 @@
 # ------------------------------
 
 # Create IAM Role for EKS Control Plane
-resource "aws_iam_role" "eks_cluster_role" {
+resource "aws_iam_role" "eks_role" {
   name = "eks-cluster-role"
 
   assume_role_policy = jsonencode({
@@ -21,7 +21,7 @@ resource "aws_iam_role" "eks_cluster_role" {
 # Attach IAM Policy to EKS Control Plane Role
 resource "aws_iam_role_policy_attachment" "eks_cluster_AmazonEKSClusterPolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.eks_cluster_role.name
+  role       = aws_iam_role.eks_role.name
 }
 
 # ------------------------------
